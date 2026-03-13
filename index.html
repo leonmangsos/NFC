@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>腾讯未来教室</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: url('bg.png') no-repeat center center fixed;
+      background-size: cover;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 40px 0;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(to top, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 40%, transparent 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      mask-image: linear-gradient(to top, black 0%, black 30%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to top, black 0%, black 30%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .header, .main-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 顶部区域 */
+    .header {
+      width: 100%;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+      height: 80px;
+      object-fit: contain;
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 600px;
+      padding: 10px 20px 20px;
+    }
+
+    /* 半透明白色容器 */
+    .content-card {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      animation: fadeIn 0.6s ease 0.15s both;
+    }
+
+    /* 图片展示 */
+    .image-container {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      position: relative;
+      background: #fff;
+    }
+
+    .image-container img {
+      width: 100%;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .image-container::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+    }
+
+    /* 音频播放器 */
+    .audio-player {
+      width: 100%;
+      padding: 0;
+    }
+
+    .player-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    /* 播放按钮 */
+    .play-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #4285f4, #34a853);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 3px 12px rgba(66, 133, 244, 0.35);
+      position: relative;
+    }
+
+    .play-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 18px rgba(66, 133, 244, 0.5);
+    }
+
+    .play-btn:active {
+      transform: scale(0.96);
+    }
+
+    .play-btn .icon-play,
+    .play-btn .icon-pause {
+      position: absolute;
+      transition: opacity 0.2s;
+    }
+
+    .play-btn .icon-play {
+      margin-left: 2px;
+    }
+
+    .play-btn.playing .icon-play {
+      opacity: 0;
+    }
+
+    .play-btn.playing .icon-pause {
+      opacity: 1;
+    }
+
+    .play-btn:not(.playing) .icon-play {
+      opacity: 1;
+    }
+
+    .play-btn:not(.playing) .icon-pause {
+      opacity: 0;
+    }
+
+    /* 音频信息 */
+    .audio-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .audio-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a2e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .audio-subtitle {
+      font-size: 12px;
+      color: #8e8ea0;
+    }
+
+    /* 声波动画 */
+    .sound-wave {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 24px;
+      padding: 0 4px;
+    }
+
+    .sound-wave .bar {
+      width: 3px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #4285f4, #34a853);
+      animation: wave 1.2s ease-in-out infinite;
+    }
+
+    .sound-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .sound-wave .bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+    .sound-wave .bar:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+    .sound-wave .bar:nth-child(4) { height: 20px; animation-delay: 0.45s; }
+    .sound-wave .bar:nth-child(5) { height: 12px; animation-delay: 0.6s; }
+
+    .sound-wave.paused .bar {
+      animation-play-state: paused;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.5); }
+      50% { transform: scaleY(1); }
+    }
+
+    /* 进度条 */
+    .progress-container {
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e8e8ef;
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar:hover {
+      height: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4285f4, #34a853);
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.1s linear;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .progress-bar:hover .progress-fill::after {
+      opacity: 1;
+    }
+
+    /* 时间显示 */
+    .time-display {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #8e8ea0;
+      margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 提示文字 */
+    .tap-hint {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #b0b0c0;
+      animation: fadeInUp 1s ease 0.5s both;
+    }
+
+    .tap-hint.hidden {
+      display: none;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 入场动画 */
+    .header {
+      animation: fadeIn 0.6s ease both;
+    }
+
+    .image-container {
+      animation: fadeIn 0.6s ease 0.15s both;
+    }
+
+    .audio-player {
+      animation: fadeIn 0.6s ease 0.3s both;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 跳转小程序按钮 */
+    .launch-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 50%;
+      margin-top: 24px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #1aad19, #2dc653);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(29, 173, 25, 0.35);
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.6s ease 0.45s both;
+      letter-spacing: 1px;
+    }
+
+    .launch-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(29, 173, 25, 0.45);
+    }
+
+    .launch-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .launch-btn .wechat-icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    /* 响应式 */
+    @media (max-width: 420px) {
+      .header {
+        padding: 16px 16px;
+      }
+      .logo {
+        height: 32px;
+      }
+      .main-content {
+        padding: 8px 16px 20px;
+      }
+      .audio-player {
+        padding: 16px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部 Logo -->
+  <div class="header">
+    <img class="logo" src="logo.png" alt="腾讯未来教室">
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main-content">
+    <!-- 半透明白色容器 -->
+    <div class="content-card">
+      <!-- 中间图片 -->
+      <div class="image-container">
+        <img src="classroom.png" alt="未来教室课堂">
+      </div>
+
+      <!-- 音频播放器 -->
+      <div class="audio-player">
+      <div class="player-top">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()">
+          <svg class="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg class="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        </button>
+        <div class="audio-info">
+          <div class="audio-title">语音播报</div>
+          <div class="audio-subtitle">腾讯未来教室</div>
+        </div>
+        <div class="sound-wave paused" id="soundWave">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar" onclick="seek(event)">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="time-display">
+          <span id="currentTime">0:00</span>
+          <span id="totalTime">0:00</span>
+        </div>
+      </div>
+    </div>
+    </div><!-- content-card 结束 -->
+
+    <!-- 跳转小程序按钮 -->
+    <button class="launch-btn" onclick="launchMiniProgram()">
+      <svg class="wechat-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05a6.329 6.329 0 0 1-.261-1.786c0-3.725 3.517-6.768 7.834-6.768.244 0 .484.012.724.036C17.184 4.529 13.299 2.188 8.691 2.188zm-2.85 4.18a1.24 1.24 0 1 1 0 2.48 1.24 1.24 0 0 1 0-2.48zm5.62 0a1.24 1.24 0 1 1 0 2.48 1.24 1.24 0 0 1 0-2.48zm4.474 3.293c-3.837 0-6.96 2.708-6.96 6.04 0 3.332 3.123 6.04 6.96 6.04.71 0 1.4-.096 2.055-.275a.717.717 0 0 1 .586.08l1.552.909a.264.264 0 0 0 .138.044.24.24 0 0 0 .236-.24c0-.06-.023-.117-.039-.174l-.318-1.208a.487.487 0 0 1 .175-.543C22.924 18.66 24 16.89 24 14.901c0-3.332-3.123-6.04-6.96-6.04h-.105zm-2.588 3.39a1.04 1.04 0 1 1 0 2.08 1.04 1.04 0 0 1 0-2.08zm4.71 0a1.04 1.04 0 1 1 0 2.08 1.04 1.04 0 0 1 0-2.08z"/>
+      </svg>
+      跳转未来教室小程序
+    </button>
+
+    <!-- 点击提示 -->
+    <div class="tap-hint" id="tapHint">轻触播放按钮开始播放 🎵</div>
+  </div>
+
+  <!-- 音频元素 -->
+  <audio id="audio" preload="auto">
+    <source src="audio.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressBar = document.getElementById('progressBar');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalTimeEl = document.getElementById('totalTime');
+    const soundWave = document.getElementById('soundWave');
+    const tapHint = document.getElementById('tapHint');
+
+    // 格式化时间
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // 切换播放/暂停
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play().then(() => {
+          updatePlayState(true);
+        }).catch(err => {
+          console.log('播放被阻止:', err);
+        });
+      } else {
+        audio.pause();
+        updatePlayState(false);
+      }
+    }
+
+    // 更新播放状态 UI
+    function updatePlayState(isPlaying) {
+      if (isPlaying) {
+        playBtn.classList.add('playing');
+        soundWave.classList.remove('paused');
+        tapHint.classList.add('hidden');
+      } else {
+        playBtn.classList.remove('playing');
+        soundWave.classList.add('paused');
+      }
+    }
+
+    // 更新进度条
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration) {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        progressFill.style.width = progress + '%';
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+      }
+    });
+
+    // 音频加载完成后显示总时长
+    audio.addEventListener('loadedmetadata', () => {
+      totalTimeEl.textContent = formatTime(audio.duration);
+    });
+
+    // 也监听 durationchange，兼容部分浏览器
+    audio.addEventListener('durationchange', () => {
+      totalTimeEl.textContent = formatTime(audio.duration);
+    });
+
+    // 播放结束
+    audio.addEventListener('ended', () => {
+      updatePlayState(false);
+      progressFill.style.width = '0%';
+      currentTimeEl.textContent = '0:00';
+      audio.currentTime = 0;
+    });
+
+    // 点击进度条跳转
+    function seek(event) {
+      const rect = progressBar.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const percent = x / rect.width;
+      audio.currentTime = percent * audio.duration;
+    }
+
+    // 页面加载后自动播放（需要用户交互才能播放，先尝试自动播放）
+    window.addEventListener('load', () => {
+      // 尝试自动播放
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          updatePlayState(true);
+        }).catch(() => {
+          // 自动播放被阻止，等用户点击
+          updatePlayState(false);
+          tapHint.classList.remove('hidden');
+        });
+      }
+    });
+
+    // 点击页面任意位置也可触发播放（仅首次）
+    document.addEventListener('click', function firstClick(e) {
+      if (audio.paused && !e.target.closest('.progress-bar') && !e.target.closest('.launch-btn')) {
+        audio.play().then(() => {
+          updatePlayState(true);
+        }).catch(() => {});
+      }
+    }, { once: true });
+
+    // 跳转小程序
+    let isLaunched = false;
+
+    function launchMiniProgram() {
+      if (isLaunched) return;
+      isLaunched = true;
+
+      const scheme = 'weixin://dl/business/?appid=wxdd44725bb7a72c6d&path=pages/home/index';
+
+      // 尝试直接跳转
+      window.location.href = scheme;
+
+      // 备用方案：使用 iframe 尝试调起
+      setTimeout(() => {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = scheme;
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          isLaunched = false; // 重置，允许再次点击
+        }, 1000);
+      }, 100);
+
+      // 2秒后重置状态，允许再次点击
+      setTimeout(() => {
+        isLaunched = false;
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
